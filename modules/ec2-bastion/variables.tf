@@ -23,5 +23,5 @@ variable "instance_type" {
 }
 
 variable "alb_tg_arns" {
-  type = list(string)
+  type = string
 }

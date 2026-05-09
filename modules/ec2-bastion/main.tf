@@ -132,7 +132,7 @@ resource "aws_autoscaling_group" "this" {
   vpc_zone_identifier = var.private_subnet_ids
 
   # ターゲットグループ指定
-  target_group_arns = var.alb_tg_arns
+  target_group_arns = [var.alb_tg_arns]
 
   # 起動テンプレートとインスタンスタイプ指定
   mixed_instances_policy {
