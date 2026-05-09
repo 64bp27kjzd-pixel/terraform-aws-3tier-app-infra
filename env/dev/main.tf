@@ -32,6 +32,7 @@ module "ec2" {
   vpc_id = module.vpc.vpc_id
   private_subnet_ids = module.vpc.private_subnet_ids
   instance_type = var.instance_type
+  alb_tg_arns = module.alb.alb_tg_arns
 }
 
 module "rds" {
