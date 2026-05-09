@@ -58,25 +58,25 @@ resource "aws_internet_gateway" "this" {
 # NAT Gateway
 # ----------------------
 resource "aws_eip" "this" {
-  count  = length(aws_subnet.public)
+  count  = local.nat_gateway_count
   domain = "vpc"
 
   tags = merge(var.common_tags, {
-    Name   = local.eip_name
+    Name   = "${local.eip_name}-${count.index + 1}"
   })
 }
 
 resource "aws_nat_gateway" "this" {
-  count = length(aws_subnet.public)
+  count = local.nat_gateway_count
 
   allocation_id = aws_eip.this[count.index].id
   subnet_id     = aws_subnet.public[count.index].id
 
   tags = merge(var.common_tags, {
-    Name = local.nat_gateway_name
+    Name = "${local.nat_gateway_name}-${count.index + 1}"
   })
 
-  depends_on = [aws_eip.this]
+  depends_on = [aws_internet_gateway.this]
 }
 
 # ----------------------
@@ -110,9 +110,9 @@ resource "aws_route_table" "private" {
 
   route {
     cidr_block     = "0.0.0.0/0"
-    nat_gateway_id = aws_nat_gateway.this[count.index].id
+    nat_gateway_id = aws_nat_gateway.this[var.single_nat_gateway ? 0 : count.index].id
   }
-  
+
   tags = merge(var.common_tags, {
     Name = "${local.private_rt_name}-${count.index + 1}"
   })

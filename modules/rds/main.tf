@@ -51,8 +51,9 @@ resource "aws_db_instance" "this" {
   vpc_security_group_ids = [aws_security_group.rds.id]
   db_subnet_group_name   = aws_db_subnet_group.this.name
 
-  multi_az            = true
-  skip_final_snapshot = true
+  multi_az            = var.multi_az
+  skip_final_snapshot = var.skip_final_snapshot
+  backup_retention_period = var.backup_retention_period
 
   tags = merge(var.common_tags, {
     Name = local.rds_name

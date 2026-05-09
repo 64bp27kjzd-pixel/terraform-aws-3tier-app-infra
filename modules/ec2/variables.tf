@@ -14,6 +14,21 @@ variable "vpc_id" {
   type = string
 }
 
+variable "asg_min_size" {
+  type = number
+  default = 2
+}
+
+variable "asg_max_size" {
+  type = number
+  default = 2
+}
+
+variable "asg_desired_capacity" {
+  type = number
+  default = 2
+}
+
 variable "private_subnet_ids" {
   type = list(string)
 }
@@ -23,5 +38,5 @@ variable "instance_type" {
 }
 
 variable "alb_tg_arns" {
-  type = string
+  type = list(string)
 }

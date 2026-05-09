@@ -42,7 +42,7 @@ data "aws_iam_policy_document" "this" {
 }
 
 resource "aws_iam_role" "this" {
-  name = "MyRole"
+  name               = local.role_name
   assume_role_policy = data.aws_iam_policy_document.this.json
 }
 
@@ -56,7 +56,7 @@ resource "aws_iam_role_policy_attachment" "this" {
 }
 
 resource "aws_iam_instance_profile" "this" {
-  name = "MyInstanceProfile"
+  name = local.instance_profile_name
   role = aws_iam_role.this.name
 }
 
@@ -121,9 +121,9 @@ resource "aws_autoscaling_group" "this" {
   name = local.asg_name
   
   # EC2をスケーリングする数
-  max_size = 2
-  min_size = 2
-  desired_capacity = 2
+  max_size         = var.asg_max_size
+  min_size         = var.asg_min_size
+  desired_capacity = var.asg_desired_capacity
 
   # ヘルスチェック
   health_check_grace_period = 300
@@ -133,7 +133,7 @@ resource "aws_autoscaling_group" "this" {
   vpc_zone_identifier = var.private_subnet_ids
 
   # ターゲットグループ指定
-  target_group_arns = [var.alb_tg_arns]
+  target_group_arns = var.alb_tg_arns
 
   # 起動テンプレートとインスタンスタイプ指定
   mixed_instances_policy {

@@ -1,11 +1,12 @@
 module "vpc" {
   source = "../../modules/vpc"
 
-  name_prefix        = local.name_prefix
-  common_tags        = local.common_tags
+  name_prefix = local.name_prefix
+  common_tags = local.common_tags
+
   vpc_cidr           = var.vpc_cidr
   azs                = var.azs
-  single_nat_gateway = true
+  single_nat_gateway = false
 }
 
 module "alb" {
@@ -31,8 +32,8 @@ module "ec2" {
   instance_type        = var.instance_type
   alb_tg_arns          = module.alb.alb_tg_arns
   asg_min_size         = 2
-  asg_max_size         = 2
-  asg_desired_capacity = 2 
+  asg_max_size         = 6
+  asg_desired_capacity = 2
 }
 
 module "rds" {
@@ -52,7 +53,7 @@ module "rds" {
   instance_class    = var.instance_class
   allocated_storage = var.allocated_storage
 
-  multi_az                = false
-  skip_final_snapshot     = true
-  backup_retention_period = 0
+  multi_az                = true
+  skip_final_snapshot     = false
+  backup_retention_period = 7
 }

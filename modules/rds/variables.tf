@@ -45,3 +45,18 @@ variable "instance_class" {
 variable "allocated_storage" {
   type = number
 }
+
+variable "multi_az" {
+  type = bool
+  default = false
+}
+
+variable "skip_final_snapshot" {
+  type = bool
+  default = true
+}
+
+variable "backup_retention_period" {
+  type = number
+  default = 0
+}

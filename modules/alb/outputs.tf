@@ -11,5 +11,5 @@ output "alb_sg_id" {
 }
 
 output "alb_tg_arns" {
-  value = aws_lb_target_group.this.arn
+  value = [aws_lb_target_group.this.arn]
 }
