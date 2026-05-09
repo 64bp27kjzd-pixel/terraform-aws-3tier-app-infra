@@ -7,4 +7,10 @@ azs = ["ap-northeast-1a", "ap-northeast-1c", "ap-northeast-1d"]
 
 instance_type = "t3.micro"
 
+asg_min_size         = 2
+asg_max_size         = 6
+asg_desired_capacity = 2
+
 instance_class = "db.t3.micro"
+
+password       = "pasword"

@@ -28,6 +28,19 @@ variable "instance_type" {
   type = string
 }
 
+variable "asg_min_size" {
+  type    = number
+  default = 2
+}
+variable "asg_max_size" {
+  type    = number
+  default = 6
+}
+variable "asg_desired_capacity" {
+  type    = number
+  default = 2
+}
+
 variable "engine" {
   type = string
   default = "mysql"

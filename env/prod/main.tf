@@ -31,9 +31,9 @@ module "ec2" {
   private_subnet_ids   = module.vpc.private_subnet_ids
   instance_type        = var.instance_type
   alb_tg_arns          = module.alb.alb_tg_arns
-  asg_min_size         = 2
-  asg_max_size         = 6
-  asg_desired_capacity = 2
+  asg_min_size         = var.asg_min_size
+  asg_max_size         = var.asg_max_size
+  asg_desired_capacity = var.asg_desired_capacity
 }
 
 module "rds" {
