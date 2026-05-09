@@ -2,21 +2,21 @@
 # Security Group
 # ----------------------
 resource "aws_security_group" "alb" {
-  name = local.sg_name
+  name   = local.sg_name
   vpc_id = var.vpc_id
 
   ingress {
-    from_port = 80
-    to_port = 80
-    protocol = "tcp"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
 
   egress {
-  from_port       = 80
-  to_port         = 80
-  protocol        = "tcp"
-  security_groups = [var.ec2_sg_id]
+  from_port       = 0
+  to_port         = 0
+  protocol        = "-1"
+  cidr_blocks     = ["0.0.0.0/0"]
   }
 
   tags = merge(var.common_tags, {
@@ -28,11 +28,11 @@ resource "aws_security_group" "alb" {
 # ALB
 # ----------------------
 resource "aws_lb" "this" {
-  name = local.alb_name
-  internal = false
+  name               = local.alb_name
+  internal           = false
   load_balancer_type = "application"
-  security_groups = [aws_security_group.alb.id]
-  subnets = var.public_subnet_ids
+  security_groups    = [aws_security_group.alb.id]
+  subnets            = var.public_subnet_ids
 
   enable_deletion_protection = false
 
@@ -45,20 +45,20 @@ resource "aws_lb" "this" {
 # Target Group
 # ----------------------
 resource "aws_lb_target_group" "this" {
-  name = local.tg_name
-  port = 80
+  name     = local.tg_name
+  port     = 80
   protocol = "HTTP"
-  vpc_id = var.vpc_id
+  vpc_id   = var.vpc_id
 
   health_check {
-    enabled = true
-    healthy_threshold = 2
-    interval = 30
-    matcher = "200"
-    path = var.health_check_path
-    port = "traffic-port"
-    protocol = "HTTP"
-    timeout = 5
+    enabled             = true
+    healthy_threshold   = 2
+    interval            = 30
+    matcher             = "200"
+    path                = var.health_check_path
+    port                = "traffic-port"
+    protocol            = "HTTP"
+    timeout             = 5
     unhealthy_threshold = 2
   }
 
@@ -67,23 +67,14 @@ resource "aws_lb_target_group" "this" {
   })
 }
 
-# ターゲットグループアタッチメント
-resource "aws_lb_target_group_attachment" "this" {
-  count = length(var.ec2_instance)
-
-  target_group_arn = aws_lb_target_group.this.arn
-  target_id = var.ec2_instance[count.index]
-  port = 80
-}
-
 # リスナー設定
 resource "aws_lb_listener" "this" {
   load_balancer_arn = aws_lb.this.arn
-  port = "80"
+  port     = "80"
   protocol = "HTTP"
 
   default_action {
-    type = "forward"
+    type             = "forward"
     target_group_arn = aws_lb_target_group.this.arn
   }
 }

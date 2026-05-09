@@ -22,12 +22,8 @@ output "alb_zone_id" {
   value = module.alb.alb_dns_name
 }
 
-output "ec2_instance_ids" {
-  value = module.ec2.ec2_instance_ids
-}
-
-output "ec2_public_ips" {
-  value = module.ec2.ec2_private_ips
+output "asg_name" {
+  value = module.ec2.asg_name
 }
 
 output "db_id" {

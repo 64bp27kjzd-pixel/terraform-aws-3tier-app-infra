@@ -1,9 +1,9 @@
-output "ec2_instance_ids" {
-  value = aws_instance.this[*].id
+output "asg_name" {
+  value = aws_autoscaling_group.this.name
 }
 
-output "ec2_private_ips" {
-  value = aws_instance.this[*].private_ip
+output "asg_arn" {
+  value = aws_autoscaling_group.this.arn
 }
 
 output "ec2_sg_id" {

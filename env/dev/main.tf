@@ -16,10 +16,8 @@ module "alb" {
   common_tags = local.common_tags
 
   vpc_id = module.vpc.vpc_id
-  ec2_sg_id = module.ec2.ec2_sg_id
   public_subnet_ids = module.vpc.public_subnet_ids
   health_check_path = var.health_check_path
-  ec2_instance = module.ec2.ec2_instance_ids
 }
 
 module "ec2" {

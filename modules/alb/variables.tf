@@ -17,11 +17,3 @@ variable "public_subnet_ids" {
 variable "health_check_path" {
   type = string
 }
-
-variable "ec2_instance" {
- type = list(string) 
-}
-
-variable "ec2_sg_id" {
-  type = string
-}
