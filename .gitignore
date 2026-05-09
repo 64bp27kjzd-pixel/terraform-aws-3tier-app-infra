@@ -18,6 +18,7 @@ crash.log
 terraform.tfvars
 *.tfvars
 *.tfvars.json
+backend.hcl
 
 # --------------------------
 # Override files
