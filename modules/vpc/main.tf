@@ -2,11 +2,12 @@
 # VPC
 # ----------------------
 resource "aws_vpc" "this" {
-  cidr_block = var.vpc_cidr
+  cidr_block           = var.vpc_cidr
   enable_dns_hostnames = true
-  enable_dns_support = true
+  enable_dns_support   = true
+
   tags = merge(var.common_tags, {
-  Name = local.vpc_name
+    Name = local.vpc_name
   })
 }
 
@@ -16,13 +17,13 @@ resource "aws_vpc" "this" {
 resource "aws_subnet" "public" {
   count = length(var.azs)
 
-  vpc_id = aws_vpc.this.id
-  cidr_block = cidrsubnet(var.vpc_cidr, 8, count.index)
-  availability_zone = var.azs[count.index]
+  vpc_id                  = aws_vpc.this.id
+  cidr_block              = cidrsubnet(var.vpc_cidr, 8, count.index)
+  availability_zone       = var.azs[count.index]
   map_public_ip_on_launch = false
 
   tags = merge(var.common_tags, {
-  Name = "${var.name_prefix}-public-subnet-${count.index + 1}"
+    Name = "${var.name_prefix}-public-subnet-${count.index + 1}"
   })
 }
 
@@ -32,13 +33,13 @@ resource "aws_subnet" "public" {
 resource "aws_subnet" "private" {
   count = length(var.azs)
 
-  vpc_id = aws_vpc.this.id
-  cidr_block = cidrsubnet(var.vpc_cidr, 8, count.index + length(var.azs))
-  availability_zone = var.azs[count.index]
+  vpc_id                  = aws_vpc.this.id
+  cidr_block              = cidrsubnet(var.vpc_cidr, 8, count.index + length(var.azs))
+  availability_zone       = var.azs[count.index]
   map_public_ip_on_launch = false
 
   tags = merge(var.common_tags, {
-  Name = "${var.name_prefix}-private-subnet-${count.index + 1}"
+    Name = "${var.name_prefix}-private-subnet-${count.index + 1}"
   })
 }
 
@@ -47,8 +48,9 @@ resource "aws_subnet" "private" {
 # ----------------------
 resource "aws_internet_gateway" "this" {
   vpc_id = aws_vpc.this.id
-  tags = merge(var.common_tags, {
-  Name = local.igw_name
+
+  tags   = merge(var.common_tags, {
+    Name   = local.igw_name
   })
 }
 
@@ -56,10 +58,11 @@ resource "aws_internet_gateway" "this" {
 # NAT Gateway
 # ----------------------
 resource "aws_eip" "this" {
-  count = length(aws_subnet.public)
+  count  = length(aws_subnet.public)
   domain = "vpc"
+
   tags = merge(var.common_tags, {
-  Name = local.eip_name
+    Name   = local.eip_name
   })
 }
 
@@ -67,11 +70,12 @@ resource "aws_nat_gateway" "this" {
   count = length(aws_subnet.public)
 
   allocation_id = aws_eip.this[count.index].id
-  subnet_id = aws_subnet.public[count.index].id
+  subnet_id     = aws_subnet.public[count.index].id
 
   tags = merge(var.common_tags, {
-  Name = local.nat_gateway_name
+    Name = local.nat_gateway_name
   })
+
   depends_on = [aws_eip.this]
 }
 
@@ -85,14 +89,15 @@ resource "aws_route_table" "public" {
     cidr_block = "0.0.0.0/0"
     gateway_id = aws_internet_gateway.this.id
   }
+
   tags = merge(var.common_tags, {
-  Name = local.public_rt_name
+    Name = local.public_rt_name
   })
 }
 
 resource "aws_route_table_association" "public" {
-  count = length(aws_subnet.public)
-  subnet_id = aws_subnet.public[count.index].id
+  count          = length(aws_subnet.public)
+  subnet_id      = aws_subnet.public[count.index].id
   route_table_id = aws_route_table.public.id
 }
 
@@ -100,20 +105,21 @@ resource "aws_route_table_association" "public" {
 # Route Table (Private)
 # ----------------------
 resource "aws_route_table" "private" {
-  count = length(aws_subnet.private)
+  count  = length(aws_subnet.private)
   vpc_id = aws_vpc.this.id
 
   route {
-    cidr_block = "0.0.0.0/0"
+    cidr_block     = "0.0.0.0/0"
     nat_gateway_id = aws_nat_gateway.this[count.index].id
   }
+  
   tags = merge(var.common_tags, {
-  Name = "${local.private_rt_name}-${count.index + 1}"
+    Name = "${local.private_rt_name}-${count.index + 1}"
   })
 }
 
 resource "aws_route_table_association" "private" {
-  count = length(aws_subnet.private)
-  subnet_id = aws_subnet.private[count.index].id
+  count          = length(aws_subnet.private)
+  subnet_id      = aws_subnet.private[count.index].id
   route_table_id = aws_route_table.private[count.index].id
 }

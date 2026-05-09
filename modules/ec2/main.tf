@@ -2,24 +2,24 @@
 # Security Group
 # ----------------------
 resource "aws_security_group" "ec2" {
-  name = local.sg_name
+  name   = local.sg_name
   vpc_id = var.vpc_id
   ingress {
-    from_port = 80
-    to_port = 80
-    protocol = "tcp"
+    from_port       = 80
+    to_port         = 80
+    protocol        = "tcp"
     security_groups = [var.alb_sg_id]
   }
 
   egress {
-    from_port = 0
-    to_port = 0
-    protocol = "-1"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
 
   tags = merge(var.common_tags, {
-  Name = local.sg_name
+    Name = local.sg_name
   })
 
   lifecycle {
@@ -35,7 +35,7 @@ data "aws_iam_policy_document" "this" {
     actions = ["sts:AssumeRole"]
 
     principals {
-      type = "Service"
+      type        = "Service"
       identifiers = ["ec2.amazonaws.com"]
     }
   }
@@ -51,7 +51,7 @@ data "aws_iam_policy" "this" {
 }
 
 resource "aws_iam_role_policy_attachment" "this" {
-  role = aws_iam_role.this.name
+  role       = aws_iam_role.this.name
   policy_arn = data.aws_iam_policy.this.arn
 }
 
@@ -62,14 +62,14 @@ resource "aws_iam_instance_profile" "this" {
 
 data "aws_ami" "amazon-linux" {
   most_recent = true
-  owners = ["amazon"]
+  owners      = ["amazon"]
 
   filter {
-    name = "name"
+    name   = "name"
     values = ["al2023-ami-2023.*-x86_64"]
   }
   filter {
-    name = "virtualization-type"
+    name   = "virtualization-type"
     values = ["hvm"]
   }
 }
@@ -81,7 +81,8 @@ resource "aws_launch_template" "this" {
   name = local.lt_name
   update_default_version = true
 
-  image_id = data.aws_ami.amazon-linux.id
+  image_id      = data.aws_ami.amazon-linux.id
+  instance_type = var.instance_type
 
   # Security Group
   vpc_security_group_ids = [aws_security_group.ec2.id]
@@ -108,7 +109,7 @@ EOF
     resource_type = "instance"
 
     tags = merge(var.common_tags, {
-    Name = local.ec2_name
+      Name = local.ec2_name
     })
   }
 }
@@ -126,7 +127,7 @@ resource "aws_autoscaling_group" "this" {
 
   # ヘルスチェック
   health_check_grace_period = 300
-  health_check_type = "ELB"
+  health_check_type         = "ELB"
 
   # VPC指定
   vpc_zone_identifier = var.private_subnet_ids
@@ -139,38 +140,8 @@ resource "aws_autoscaling_group" "this" {
     launch_template {
       launch_template_specification {
         launch_template_id = aws_launch_template.this.id
-        version = "$Latest"
+        version            = "$Latest"
       }
     }
   }
 }
-
-# ----------------------
-# EC2
-# ----------------------
-/*
-resource "aws_instance" "this" {
-  count = length(var.private_subnet_ids)
-
-  ami = data.aws_ami.amazon-linux.id
-  instance_type = var.instance_type
-  subnet_id = var.private_subnet_ids[count.index]
-  vpc_security_group_ids = [aws_security_group.ec2.id]
-  iam_instance_profile = aws_iam_instance_profile.this.name
-
-  user_data = <<-EOF
-  #!/bin/bash
-  dnf update -y
-  dnf install -y httpd
-
-  systemctl start httpd
-  systemctl enable httpd
-
-  echo "Hello from EC2" > /var/www/html/index.html
-  EOF
-
-  tags = merge(var.common_tags, {
-  Name = local.ec2_name
-  })
-}
-*/

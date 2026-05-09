@@ -13,14 +13,14 @@ resource "aws_security_group" "alb" {
   }
 
   egress {
-  from_port       = 0
-  to_port         = 0
-  protocol        = "-1"
-  cidr_blocks     = ["0.0.0.0/0"]
+  from_port   = 0
+  to_port     = 0
+  protocol    = "-1"
+  cidr_blocks = ["0.0.0.0/0"]
   }
 
   tags = merge(var.common_tags, {
-  Name = local.sg_name
+    Name = local.sg_name
   })
 }
 
@@ -37,7 +37,7 @@ resource "aws_lb" "this" {
   enable_deletion_protection = false
 
   tags = merge(var.common_tags, {
-  Name = local.alb_name
+    Name = local.alb_name
   })
 }
 
@@ -63,15 +63,15 @@ resource "aws_lb_target_group" "this" {
   }
 
   tags = merge(var.common_tags, {
-  Name = local.tg_name
+    Name = local.tg_name
   })
 }
 
 # リスナー設定
 resource "aws_lb_listener" "this" {
   load_balancer_arn = aws_lb.this.arn
-  port     = "80"
-  protocol = "HTTP"
+  port              = "80"
+  protocol          = "HTTP"
 
   default_action {
     type             = "forward"
