@@ -75,8 +75,80 @@ data "aws_ami" "amazon-linux" {
 }
 
 # ----------------------
+# Launch Template
+# ----------------------
+resource "aws_launch_template" "this" {
+  name = local.lt_name
+  update_default_version = true
+
+  image_id = data.aws_ami.amazon-linux.id
+
+  # Security Group
+  vpc_security_group_ids = [aws_security_group.ec2.id]
+
+  # IAM Role
+  iam_instance_profile {
+    name = aws_iam_instance_profile.this.name
+  }
+
+  # UserData
+  user_data = base64encode(<<-EOF
+#!/bin/bash
+dnf update -y
+dnf install -y httpd
+
+systemctl start httpd
+systemctl enable httpd
+
+echo "Hello from EC2" > /var/www/html/index.html
+EOF
+  )
+
+  tag_specifications {
+    resource_type = "instance"
+
+    tags = merge(var.common_tags, {
+    Name = local.ec2_name
+    })
+  }
+}
+
+# ----------------------
+# Auto Scaling Group
+# ----------------------
+resource "aws_autoscaling_group" "this" {
+  name = local.asg_name
+  
+  # EC2をスケーリングする数
+  max_size = 2
+  min_size = 2
+  desired_capacity = 2
+
+  # ヘルスチェック
+  health_check_grace_period = 300
+  health_check_type = "ELB"
+
+  # VPC指定
+  vpc_zone_identifier = var.private_subnet_ids
+
+  # ターゲットグループ指定
+  target_group_arns = var.alb_tg_arns
+
+  # 起動テンプレートとインスタンスタイプ指定
+  mixed_instances_policy {
+    launch_template {
+      launch_template_specification {
+        launch_template_id = aws_launch_template.this.id
+        version = "$Latest"
+      }
+    }
+  }
+}
+
+# ----------------------
 # EC2
 # ----------------------
+/*
 resource "aws_instance" "this" {
   count = length(var.private_subnet_ids)
 
@@ -101,3 +173,4 @@ resource "aws_instance" "this" {
   Name = local.ec2_name
   })
 }
+*/

@@ -21,3 +21,7 @@ variable "private_subnet_ids" {
 variable "instance_type" {
   type = string
 }
+
+variable "alb_tg_arns" {
+  type = list(string)
+}
