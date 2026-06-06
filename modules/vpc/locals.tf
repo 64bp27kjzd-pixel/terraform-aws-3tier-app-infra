@@ -6,5 +6,5 @@ locals {
   public_rt_name   = "${var.name_prefix}-public-rt"
   private_rt_name  = "${var.name_prefix}-private-rt"
 
-  nat_gateway_count = var.single_nat_gateway ? 1 : length(aws_subnet.public)
+  nat_gateway_count = var.single_nat_gateway ? 1 : length(var.azs)
 }

@@ -2,9 +2,7 @@
 # EC2 CPU使用率監視
 # ----------------------
 resource "aws_cloudwatch_metric_alarm" "ec2_cpu_alarm" {
-  for_each = var.ec2_instance_ids
-
-  alarm_name          = "${var.env}-ec2-${each.value}-cpu-high"
+  alarm_name          = "${var.env}-asg-${var.asg_name}-cpu-high"
   comparison_operator = "GreaterThanOrEqualToThreshold"
   evaluation_periods  = 2
   metric_name         = "CPUUtilization"
@@ -12,11 +10,11 @@ resource "aws_cloudwatch_metric_alarm" "ec2_cpu_alarm" {
   period              = 300
   statistic           = "Average"
   threshold           = 70
-  alarm_description   = "EC2 CPU使用率が90%を超過 (${each.value})"
+  alarm_description   = "EC2 CPU使用率が70%を超過 (${var.asg_name})"
   alarm_actions       = [var.sns_topic_arn]
   
   dimensions = {
-    InstanceId = each.value
+    AutoScalingGroupName = var.asg_name
   }
 }
 
@@ -24,9 +22,7 @@ resource "aws_cloudwatch_metric_alarm" "ec2_cpu_alarm" {
 # EC2死活監視
 # ----------------------
 resource "aws_cloudwatch_metric_alarm" "ec2_StatusCheck_alarm" {
-  for_each = var.ec2_instance_ids
-
-  alarm_name          = "${var.env}-ec2-${each.value}-status-check-failed"
+  alarm_name          = "${var.env}-ec2-${var.asg_name}-status-check-failed"
   metric_name = "StatusCheckFailed"
   comparison_operator = "GreaterThanOrEqualToThreshold"
   evaluation_periods = 2
@@ -34,11 +30,12 @@ resource "aws_cloudwatch_metric_alarm" "ec2_StatusCheck_alarm" {
   statistic = "Maximum"
   period = 300
   threshold = 1
+  alarm_description = "EC2 ステータスチェック失敗 (${var.asg_name})"
   alarm_actions = [var.sns_topic_arn]
   treat_missing_data = "missing"
   
   dimensions = {
-    InstanceId = each.value
+    AutoScalingGroupName = var.asg_name
   }
 }
 
@@ -81,8 +78,8 @@ resource "aws_cloudwatch_metric_alarm" "alb_target_5xx" {
   period      = 60
 
   dimensions = {
-    LoadBalancer = aws_lb.alb.arn_suffix
-    TargetGroup  = aws_lb_target_group.app.arn_suffix
+    LoadBalancer = var.alb_arn
+    TargetGroup  = var.alb_tg_arn
   }
 
   alarm_description = "Too many target 5XX errors"
@@ -105,7 +102,7 @@ resource "aws_cloudwatch_metric_alarm" "alb_response_time" {
   period      = 60
 
   dimensions = {
-    LoadBalancer = aws_lb.alb.arn_suffix
+    LoadBalancer = var.alb_arn
   }
 
   alarm_description = "ALB target response time too high"
@@ -124,7 +121,7 @@ resource "aws_cloudwatch_metric_alarm" "cpu_utilization_too_high" {
   namespace           = "AWS/RDS"
   period              = 600
   statistic           = "Average"
-  threshold           = local.thresholds["CPUUtilizationThreshold"]
+  threshold           = var.cpu_utilization_threshold
   alarm_description   = "Average database CPU utilization over last 10 minutes"
   alarm_actions       = [var.sns_topic_arn]
 
@@ -165,12 +162,12 @@ resource "aws_cloudwatch_metric_alarm" "rds_connections" {
 resource "aws_cloudwatch_metric_alarm" "free_storage_space_too_low" {
   alarm_name          = "${var.env}-rds-storage-low"
   comparison_operator = "LessThanThreshold"
-  evaluation_periods  = "1"
+  evaluation_periods  = 1
   metric_name         = "FreeStorageSpace"
   namespace           = "AWS/RDS"
   period              = 600
   statistic           = "Average"
-  threshold           = local.thresholds["FreeStorageSpaceThreshold"]
+  threshold           = var.free_storage_space_threshold
   alarm_description   = "Average database free storage space over last 10 minutes"
   alarm_actions       = [var.sns_topic_arn]
 
@@ -185,12 +182,12 @@ resource "aws_cloudwatch_metric_alarm" "free_storage_space_too_low" {
 resource "aws_cloudwatch_metric_alarm" "freeable_memory_too_low" {
   alarm_name          = "${var.env}-rds-memory-low"
   comparison_operator = "LessThanThreshold"
-  evaluation_periods  = "1"
+  evaluation_periods  = 1
   metric_name         = "FreeableMemory"
   namespace           = "AWS/RDS"
   period              = 600
   statistic           = "Average"
-  threshold           = local.thresholds["FreeableMemoryThreshold"]
+  threshold           = var.freeable_memory_threshold
   alarm_description   = "Average database freeable memory over last 10 minutes too low, performance may suffer"
   alarm_actions       = [var.sns_topic_arn]
 
@@ -203,7 +200,8 @@ resource "aws_cloudwatch_metric_alarm" "freeable_memory_too_low" {
 # NAT Gateway ポート不足
 # ----------------------
 resource "aws_cloudwatch_metric_alarm" "natgw_error_port_allocation" {
-  alarm_name          = "${var.env}-natgw-port-allocation-error"
+  for_each   = var.nat_gw_ids
+  alarm_name          = "${var.env}-natgw-${each.value}-port-allocation-error"
   alarm_description   = "NAT Gateway port allocation errors detected"
 
   namespace   = "AWS/NATGateway"
@@ -217,7 +215,7 @@ resource "aws_cloudwatch_metric_alarm" "natgw_error_port_allocation" {
   statistic = "Sum"
 
   dimensions = {
-    NatGatewayId = var.nat_gw_id
+    NatGatewayId = each.value
   }
 
   alarm_actions = [var.sns_topic_arn]
@@ -227,7 +225,9 @@ resource "aws_cloudwatch_metric_alarm" "natgw_error_port_allocation" {
 # NAT Gateway ドロップしたパケット数
 # ----------------------
 resource "aws_cloudwatch_metric_alarm" "natgw_packet_drop" {
-  alarm_name          = "${var.env}-natgw-packet-drop"
+  for_each = var.nat_gw_ids
+
+  alarm_name          = "${var.env}-natgw-${each.value}-packet-drop"
   alarm_description   = "NAT Gateway packet drops detected"
 
   namespace   = "AWS/NATGateway"
@@ -241,8 +241,9 @@ resource "aws_cloudwatch_metric_alarm" "natgw_packet_drop" {
   statistic = "Sum"
 
   dimensions = {
-    NatGatewayId = var.nat_gw_id
+    NatGatewayId = each.value
   }
 
   alarm_actions = [var.sns_topic_arn]
 }
+

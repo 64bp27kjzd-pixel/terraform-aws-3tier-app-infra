@@ -14,3 +14,5 @@ asg_desired_capacity = 2
 instance_class = "db.t3.micro"
 
 password       = "pasword"
+
+send_email = "test@exsample.com"

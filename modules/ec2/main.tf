@@ -21,10 +21,6 @@ resource "aws_security_group" "ec2" {
   tags = merge(var.common_tags, {
     Name = local.sg_name
   })
-
-  lifecycle {
-    create_before_destroy = false
-  }
 }
 
 # ----------------------
@@ -46,13 +42,22 @@ resource "aws_iam_role" "this" {
   assume_role_policy = data.aws_iam_policy_document.this.json
 }
 
-data "aws_iam_policy" "this" {
+data "aws_iam_policy" "ssm_agent" {
   arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }
 
-resource "aws_iam_role_policy_attachment" "this" {
+data "aws_iam_policy" "cloudwatch_agent" {
+  arn = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
+}
+
+resource "aws_iam_role_policy_attachment" "ssm_agent" {
   role       = aws_iam_role.this.name
-  policy_arn = data.aws_iam_policy.this.arn
+  policy_arn = data.aws_iam_policy.ssm_agent.arn
+}
+
+resource "aws_iam_role_policy_attachment" "cloudwatch_agent" {
+  role       = aws_iam_role.this.name
+  policy_arn = data.aws_iam_policy.cloudwatch_agent.arn
 }
 
 resource "aws_iam_instance_profile" "this" {
@@ -93,17 +98,9 @@ resource "aws_launch_template" "this" {
   }
 
   # UserData
-  user_data = base64encode(<<-EOF
-#!/bin/bash
-dnf update -y
-dnf install -y httpd
-
-systemctl start httpd
-systemctl enable httpd
-
-echo "Hello from EC2" > /var/www/html/index.html
-EOF
-  )
+  user_data = base64encode(templatefile("${path.module}/../userdata.sh", {
+  env = var.env
+  }))
 
   tag_specifications {
     resource_type = "instance"
@@ -140,7 +137,7 @@ resource "aws_autoscaling_group" "this" {
     launch_template {
       launch_template_specification {
         launch_template_id = aws_launch_template.this.id
-        version            = "$Latest"
+        version            = "$Default"
       }
     }
   }

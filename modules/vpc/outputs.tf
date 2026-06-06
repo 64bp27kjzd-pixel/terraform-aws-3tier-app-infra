@@ -21,3 +21,12 @@ output "public_cidrs" {
 output "private_cidrs" {
   value = aws_subnet.private[*].cidr_block
 }
+
+output "nat_gateway_ids" {
+  description = "NAT Gateway IDのリスト"
+  value       = aws_nat_gateway.this[*].id
+}
+
+output "nat_gw_ids" {
+  value = aws_nat_gateway.this[*].id
+}

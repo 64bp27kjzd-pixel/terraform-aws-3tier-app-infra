@@ -1,6 +1,6 @@
 # SNS Topicの作成
 resource "aws_sns_topic" "send_to_email_topic" {
-  name = "send_to_email_topic"
+  name = "${var.env}-send_to_email_topic"
 }
 
 # SNS Subscription
