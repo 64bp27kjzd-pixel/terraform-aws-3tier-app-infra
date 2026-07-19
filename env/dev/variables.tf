@@ -1,3 +1,6 @@
+# ----------------------
+# Common
+# ----------------------
 variable "project_name" {
   type = string
   description = "プロジェクト名。リソース名のプレフィックスに使用される"
@@ -13,6 +16,9 @@ variable "vpc_cidr" {
   description = "VPCのCIDRブロック"
 }
 
+# ----------------------
+# VPC
+# ----------------------
 variable "azs" {
   type = list(string)
   description = "使用するアベイラビリティゾーンのリスト"
@@ -24,6 +30,9 @@ variable "enable_nat_gateway" {
   description = "trueの場合、NAT Gatewayを作成しプライベートサブネットからのアウトバウンド通信を有効にする"
 }
 
+# ----------------------
+# ALB
+# ----------------------
 variable "enable_deletion_protection" {
   type = bool
   default = false
@@ -36,11 +45,35 @@ variable "health_check_path" {
   description = "ALBヘルスチェックのパス"
 }
 
+# ----------------------
+# EC2
+# ----------------------
 variable "instance_type" {
   type = string
   description = "EC2インスタンスタイプ"
 }
 
+variable "asg_min_size" {
+  type        = number
+  default     = 2
+  description = "ASGの最小インスタンス数"
+}
+
+variable "asg_max_size" {
+  type        = number
+  default     = 2
+  description = "ASGの最大インスタンス数"
+}
+
+variable "asg_desired_capacity" {
+  type        = number
+  default     = 2
+  description = "ASGの希望インスタンス数"
+}
+
+# ----------------------
+# RDS
+# ----------------------
 variable "engine" {
   type = string
   default = "mysql"
@@ -72,15 +105,39 @@ variable "username" {
 
 variable "password" {
   type = string
-  sensitive = false
+  sensitive = true
   description = "RDSのマスターパスワード"
 }
 
+variable "multi_az" {
+  type        = bool
+  default     = false
+  description = "trueの場合、RDSをMulti-AZ構成にする"
+}
+
+variable "backup_retention_period" {
+  type        = number
+  default     = 0
+  description = "RDSの自動バックアップ保持日数(0=無効)"
+}
+
+variable "skip_final_snapshot" {
+  type    = bool
+  default = true
+  description = "trueの場合、削除時スナップショットをスキップ"
+}
+
+# ----------------------
+# SNS
+# ----------------------
 variable "send_email" {
   type = string
   description = "CloudWatchアラーム通知の送信先メールアドレス"
 }
 
+# ----------------------
+# CloudWatch Logs
+# ----------------------
 variable "enable_alb_logs" {
   type = bool
   default = false
@@ -105,6 +162,9 @@ variable "log_retention_days" {
   description = "CloudWatch Logsのログ保持日数"
 }
 
+# ----------------------
+# CloudWatch Alarms
+# ----------------------
 variable "db_connections_threshold" {
   type = number
   default = 50

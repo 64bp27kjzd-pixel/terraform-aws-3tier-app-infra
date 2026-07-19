@@ -94,7 +94,7 @@ resource "aws_cloudwatch_metric_alarm" "alb_response_time" {
   alarm_name          = "${var.env}-alb-response-time-high"
   comparison_operator = "GreaterThanOrEqualToThreshold"
   evaluation_periods  = 2
-  threshold           = 1
+  threshold           = 1.0
 
   namespace   = "AWS/ApplicationELB"
   metric_name = "TargetResponseTime"
@@ -115,18 +115,20 @@ resource "aws_cloudwatch_metric_alarm" "alb_response_time" {
 # ----------------------
 resource "aws_cloudwatch_metric_alarm" "cpu_utilization_too_high" {
   alarm_name          = "${var.env}-rds-cpu-high"
-  comparison_operator = "GreaterThanThreshold"
-  evaluation_periods  = 1
-  metric_name         = "CPUUtilization"
-  namespace           = "AWS/RDS"
-  period              = 600
-  statistic           = "Average"
-  threshold           = var.cpu_utilization_threshold
-  alarm_description   = "Average database CPU utilization over last 10 minutes"
-  alarm_actions       = [var.sns_topic_arn]
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+
+  evaluation_periods = 10
+  datapoints_to_alarm = 1
+  metric_name = "CPUUtilization"
+  namespace   = "AWS/RDS"
+  period = 300
+  statistic = "Average"
+  threshold = var.cpu_utilization_threshold
+
+  alarm_actions = [var.sns_topic_arn]
 
   dimensions = {
-    DBInstanceIdentifier = var.db_instance_id
+    DBInstanceIdentifier = var.db_instance_identifier
   }
 }
 
@@ -140,20 +142,18 @@ resource "aws_cloudwatch_metric_alarm" "rds_connections" {
   namespace   = "AWS/RDS"
   metric_name = "DatabaseConnections"
 
-  comparison_operator = "GreaterThanOrEqualToThreshold"
+  comparison_operator = "GreaterThanThreshold"
   threshold           = var.db_connections_threshold
   evaluation_periods  = 2
+  datapoints_to_alarm = 1
   period              = 60
-
   statistic = "Average"
 
   dimensions = {
-    DBInstanceIdentifier = var.db_instance_id
+    DBInstanceIdentifier = var.db_instance_identifier
   }
 
   alarm_actions = [var.sns_topic_arn]
-
-  treat_missing_data = "notBreaching"
 }
 
 # ----------------------
@@ -162,37 +162,38 @@ resource "aws_cloudwatch_metric_alarm" "rds_connections" {
 resource "aws_cloudwatch_metric_alarm" "free_storage_space_too_low" {
   alarm_name          = "${var.env}-rds-storage-low"
   comparison_operator = "LessThanThreshold"
+
   evaluation_periods  = 1
-  metric_name         = "FreeStorageSpace"
-  namespace           = "AWS/RDS"
-  period              = 600
-  statistic           = "Average"
-  threshold           = var.free_storage_space_threshold
-  alarm_description   = "Average database free storage space over last 10 minutes"
-  alarm_actions       = [var.sns_topic_arn]
+  datapoints_to_alarm = 1
+  metric_name = "FreeStorageSpace"
+  namespace   = "AWS/RDS"
+  period    = 300
+  statistic = "Average"
+  threshold = var.free_storage_space_threshold
+
+  alarm_actions = [var.sns_topic_arn]
 
   dimensions = {
-    DBInstanceIdentifier = var.db_instance_id
+    DBInstanceIdentifier = var.db_instance_identifier
   }
 }
 
-# ----------------------
+# --------------------------------
 # RDS メモリ
-# ----------------------
-resource "aws_cloudwatch_metric_alarm" "freeable_memory_too_low" {
-  alarm_name          = "${var.env}-rds-memory-low"
+# --------------------------------
+resource "aws_cloudwatch_metric_alarm" "memory_freeable_too_low" {
+  alarm_name          = "rds-FreeableMemory-low"
   comparison_operator = "LessThanThreshold"
   evaluation_periods  = 1
   metric_name         = "FreeableMemory"
   namespace           = "AWS/RDS"
-  period              = 600
+  period              = 60
   statistic           = "Average"
   threshold           = var.freeable_memory_threshold
-  alarm_description   = "Average database freeable memory over last 10 minutes too low, performance may suffer"
   alarm_actions       = [var.sns_topic_arn]
 
   dimensions = {
-    DBInstanceIdentifier = var.db_instance_id
+    DBInstanceIdentifier = var.db_instance_identifier
   }
 }
 

@@ -3,9 +3,14 @@ set -euo pipefail
 
 dnf update -y
 dnf install -y httpd amazon-cloudwatch-agent
+dnf install mariadb105 -y
 
 systemctl enable httpd
 systemctl start httpd
+
+cat <<EOF > /var/www/html/index.html
+<h1>Hello from $(hostname)</h1>
+EOF
 
 cat <<EOF > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
 {
@@ -14,8 +19,8 @@ cat <<EOF > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
       "files": {
         "collect_list": [
           {
-            "file_path": "/var/log/messages",
-            "log_group_name": "/${env}/ec2/messages",
+            "file_path": "/var/log/dnf.log",
+            "log_group_name": "/${env}/ec2/dnf",
             "log_stream_name": "{instance_id}"
           },
           {

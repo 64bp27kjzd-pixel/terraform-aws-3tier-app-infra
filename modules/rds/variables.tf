@@ -75,3 +75,8 @@ variable "backup_retention_period" {
   default = 0
   description = "自動バックアップの保持日数 (0で無効、本番環境では7以上推奨)"
 }
+
+variable "final_snapshot_identifier" {
+  type    = string
+  default = null
+}

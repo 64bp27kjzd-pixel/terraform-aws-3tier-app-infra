@@ -23,11 +23,6 @@ variable "alb_tg_arn" {
   description = "監視対象ターゲットグループのARNサフィックス (CloudWatchディメンション用)"
 }
 
-variable "db_instance_id" {
-  type = string
-  description = "監視対象RDSインスタンスの識別子"
-}
-
 variable "db_connections_threshold" {
   type = number
   description = "RDS接続数アラームの閾値"
@@ -52,6 +47,10 @@ variable "free_storage_space_threshold" {
 
 variable "freeable_memory_threshold" {
   type        = number
-  default = 256000000
-  description = "RDS空きメモリアラームの閾値 (バイト)"
+  default     = 256000000 # 256 MB
+  description = "RDSのFreeableMemoryアラーム閾値(バイト単位)"
+}
+
+variable "db_instance_identifier" {
+  type = string
 }

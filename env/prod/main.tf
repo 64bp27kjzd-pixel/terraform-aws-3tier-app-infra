@@ -9,7 +9,7 @@ module "vpc" {
 
   vpc_cidr           = var.vpc_cidr
   azs                = var.azs
-  single_nat_gateway = false
+  single_nat_gateway = var.enable_nat_gateway
 }
 
 # ----------------------
@@ -53,7 +53,7 @@ module "ec2" {
   vpc_id               = module.vpc.vpc_id
   private_subnet_ids   = module.vpc.private_subnet_ids
   instance_type        = var.instance_type
-  alb_tg_arns          = [module.alb.alb_tg_arns]
+  alb_tg_arns          = [module.alb.alb_tg_arn]
   asg_min_size         = var.asg_min_size
   asg_max_size         = var.asg_max_size
   asg_desired_capacity = var.asg_desired_capacity
@@ -79,9 +79,9 @@ module "rds" {
   instance_class    = var.instance_class
   allocated_storage = var.allocated_storage
 
-  multi_az                = true
-  skip_final_snapshot     = false
-  backup_retention_period = 7
+  multi_az                = var.multi_az
+  skip_final_snapshot     = var.skip_final_snapshot
+  backup_retention_period = var.backup_retention_period
 }
 
 # ----------------------
@@ -119,9 +119,9 @@ module "alarms" {
   sns_topic_arn = module.sns.sns_topic_arn
 
   asg_name = module.ec2.asg_name 
-  alb_arn = module.alb.alb_arn
-  alb_tg_arn = module.alb.alb_tg_arns
-  db_instance_id = module.rds.db_id
+  alb_arn = module.alb.alb_arn_suffix
+  alb_tg_arn = module.alb.alb_tg_arn_suffix
+  db_instance_identifier = module.rds.db_instance_identifier
   db_connections_threshold = var.db_connections_threshold
   nat_gw_ids = {
     "az-a" = module.vpc.nat_gw_ids[0]
