@@ -1,15 +1,123 @@
 # terraform-aws-3tier-app-infra
-
-TerraformでAWS上に3層構成（Web/AP/DB）をモジュール化して構築したインフラ構成です。
-
+ 
+TerraformでAWS上に3層構成（Web/AP/DB）を意識したインフラ環境を、モジュール化して構築したプロジェクトです。
+ 
+単に「動くインフラ」を作るだけでなく、以下を意識して設計しています。
+ 
+- 環境分離（dev / prod）
+- モジュール分割による責務の明確化と再利用性
+- 本番運用を意識した3層アーキテクチャ設計
+- Terraformによる状態管理設計（S3 backend + DynamoDBロック）
+- AWS Well-Architectedフレームワーク（6つの柱）による自己評価と継続的な改善
+---
+ 
 ## 構成
-- Web層：ALB
-- AP層：EC2（Auto Scaling Group）
-- DB層：RDS
+ 
+- **Web層**：ALB（Application Load Balancer）
+- **AP層**：EC2（Auto Scaling Group、Launch Template採用）
+- **DB層**：RDS（dev：シングル構成 / prod：Multi-AZ構成）
+### アーキテクチャ図
+ 
+**dev環境**
+![アーキテクチャ図（dev環境）](docs/images/architecture-dev.png)
+ 
+**prod環境**
+![アーキテクチャ図（prod環境）](docs/images/architecture-prod.png)
+ 
+通信経路はセキュリティグループのSG参照のみで制御しており、IPアドレス指定は使用していません。
+ 
+| 通信経路 | 制御方法 |
+|---|---|
+| Internet → ALB | 0.0.0.0/0のHTTP(80)を許可 |
+| ALB → EC2 | ALBのSGをソースに指定 |
+| EC2 → RDS | EC2のSGをソースに指定 |
+ 
+EC2はSSM Session Manager経由で接続する構成とし、SSHポート（22番）の開放・踏み台サーバを一切排除しています。
+ 
+---
+ 
+## ディレクトリ構成
+ 
+```
+.
+├── env
+│   ├── dev
+│   └── prod
+├── modules
+│   ├── vpc      # ネットワーク基盤
+│   ├── ec2      # アプリケーションサーバ（ASG）
+│   ├── alb      # 負荷分散
+│   ├── rds      # データベース
+│   ├── alarm    # CloudWatch Alarm / SNS通知
+│   ├── logs     # CloudWatch Logs / ALBアクセスログ / VPCフローログ
+│   └── s3       # ALBアクセスログ保存用バケット
+└── versions.tf
+```
+ 
+モジュール間の依存方向は `vpc → alb → ec2 → rds` の一方向で、循環参照が発生しない構造にしています。各モジュールはvariablesで値を受け取るだけで、他モジュールを直接参照しません。
+ 
+---
+ 
+## 環境ごとの構成差分（dev / prod）
+ 
+| 項目 | dev | prod |
+|---|---|---|
+| AZ数 | 2AZ | 3AZ |
+| NAT Gateway | 1台（共有） | AZごとに配置 |
+| EC2台数 | 固定2台 | min2〜max6でスケーリング |
+| RDS | シングル構成 | Multi-AZ構成 |
+| RDSバックアップ保持期間 | 0日（無効） | 7日間 |
+| VPCフローログ | 無効 | 有効 |
+| ALBアクセスログ | 無効 | 有効 |
+| ログ保持期間 | 7日 | 30日 |
+ 
+devは低コストで検証できる構成、prodは可用性・監査要件を優先した構成として、同一モジュールを環境ごとのvariablesで使い分けています。
+ 
+---
+ 
+## 監視・ログ基盤
+ 
+- **CloudWatch Alarm**：EC2（CPU使用率・ステータスチェック）、ALB（5xxエラー・レスポンスタイム・異常ホスト数）、RDS（CPU・接続数・ストレージ・メモリ）、NAT Gateway（ポート枯渇・パケットドロップ）を監視
+- **SNS通知**：アラーム発火時にメール通知
+- **CloudWatch Logs**：EC2のシステムログ・Apacheログを転送
+- **VPCフローログ**：ACCEPT/REJECT両方を記録し、不審な通信を事後追跡可能に（prod環境）
+- **ALBアクセスログ**：S3バケットに保存（SSE-S3暗号化・パブリックアクセス全面ブロック）
+各アラームは疑似発火（`aws cloudwatch set-alarm-state`）と実負荷（stress-ngによるCPU負荷、意図的なhttpd停止など）の両方で動作確認済みです。
+ 
+---
+ 
+## デプロイ手順
+ 
+```bash
+cd env/dev  # または env/prod
+ 
+# tfvars.exampleをコピーして環境に合わせて編集
+cp terraform.tfvars.example terraform.tfvars
+ 
+terraform init
+terraform plan
+terraform apply
+```
+ 
+`terraform.tfvars` は `.gitignore` で除外しているため、リポジトリには含まれません。
+ 
+---
 
-## 環境
-- dev / prod の2環境に対応
-- tfstateはS3 + DynamoDBで管理
+## 関連記事（Zenn）
 
-## 関連記事
-- [第1回：全体設計・モジュール構成編]
+設計の意図・トラブルシューティングの詳細は以下の記事にまとめています。
+
+1. 全体設計・モジュール構成編：`https://zenn.dev/aws_iac_notes/articles/1c73b25c97232a`
+2. AWS Well-Architectedフレームワークによる自己評価編：`https://zenn.dev/aws_iac_notes/articles/d90856b81e65e0`
+3. CloudWatch監視・アラーム実装編（前編）：`https://zenn.dev/aws_iac_notes/articles/6d244171abd217`
+4. CloudWatch監視・ログ収集基盤編（後編）：`https://zenn.dev/aws_iac_notes/articles/eda5579e3d083a`
+
+---
+
+## 今後の拡張予定
+
+- [ ] HTTPS対応（Route53 + ACM）
+- [ ] RDS認証情報のParameter Store（SecureString）による動的参照への移行
+- [ ] ASGスケーリングポリシーの定義
+- [ ] CloudFront導入によるCDN配信
+- [ ] GitHub ActionsによるTerraform CI（fmt / validate / plan の自動化）
