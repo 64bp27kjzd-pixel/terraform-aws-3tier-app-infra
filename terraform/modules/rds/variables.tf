@@ -1,78 +1,78 @@
 variable "name_prefix" {
-  type = string
+  type        = string
   description = "リソース名のプレフィックス"
 }
 
 variable "common_tags" {
-  type = map(string)
+  type        = map(string)
   description = "全リソースに付与する共通タグ"
 }
 
 variable "vpc_id" {
-  type = string
+  type        = string
   description = "RDSを配置するVPCのID"
 }
 
 variable "ec2_sg_id" {
-  type = string
+  type        = string
   description = "RDSへのアクセスを許可するEC2のセキュリティグループID"
 }
 
 variable "subnet_ids" {
-  type = list(string)
+  type        = list(string)
   description = "RDSを配置するサブネットIDのリスト (マルチAZ構成の場合は複数指定)"
 }
 
 variable "username" {
-  type = string
+  type        = string
   description = "RDSのマスターユーザー名"
 }
 
 variable "password" {
-  type = string
+  type        = string
   description = "RDSのマスターパスワード"
 }
 
 variable "vpc_cidr" {
-  type = string
+  type        = string
   description = "VPCのCIDRブロック"
 }
 
 variable "engine" {
-  type = string
+  type        = string
   description = "DBエンジン"
 }
 
 variable "engine_version" {
-  type = string
+  type        = string
   description = "DBエンジンのバージョン"
 }
 
 variable "instance_class" {
-  type = string
+  type        = string
   description = "RDSインスタンスクラス"
 }
 
 variable "allocated_storage" {
-  type = number
+  type        = number
   description = "RDSに割り当てるストレージ容量 (GB)"
 }
 
 variable "multi_az" {
-  type = bool
-  default = false
+  type        = bool
+  default     = false
   description = "trueの場合、マルチAZ構成でRDSを作成する"
 }
 
 variable "skip_final_snapshot" {
-  type = bool
-  default = true
+  type        = bool
+  default     = true
   description = "trueの場合、RDS削除時にスナップショットを作成しない。本番環境ではfalse推奨"
 }
 
 variable "backup_retention_period" {
-  type = number
-  default = 0
+  type        = number
+  default     = 0
   description = "自動バックアップの保持日数 (0で無効、本番環境では7以上推奨)"
 }
 

@@ -18,7 +18,7 @@ module "vpc" {
 module "s3" {
   source = "../../modules/s3"
 
-  env = var.env
+  env     = var.env
   alb_arn = module.alb.alb_arn
 }
 
@@ -31,12 +31,12 @@ module "alb" {
   name_prefix = local.name_prefix
   common_tags = local.common_tags
 
-  vpc_id            = module.vpc.vpc_id
-  public_subnet_ids = module.vpc.public_subnet_ids
+  vpc_id                     = module.vpc.vpc_id
+  public_subnet_ids          = module.vpc.public_subnet_ids
   enable_deletion_protection = var.enable_deletion_protection
-  alb_logs_bucket = module.s3.alb_logs_bucket
-  health_check_path = var.health_check_path
-  s3_bucket_arn = module.s3.bucket_arn
+  alb_logs_bucket            = module.s3.alb_logs_bucket
+  health_check_path          = var.health_check_path
+  s3_bucket_arn              = module.s3.bucket_arn
 }
 
 # ----------------------
@@ -47,7 +47,7 @@ module "ec2" {
 
   name_prefix = local.name_prefix
   common_tags = local.common_tags
-  env = var.env
+  env         = var.env
 
   alb_sg_id            = module.alb.alb_sg_id
   vpc_id               = module.vpc.vpc_id
@@ -91,7 +91,7 @@ module "sns" {
   source = "../../modules/sns"
 
   send_email = var.send_email
-  env = var.env
+  env        = var.env
 }
 
 # ----------------------
@@ -100,13 +100,13 @@ module "sns" {
 module "logs" {
   source = "../../modules/logs"
 
-  env = var.env
-  enable_alb_logs = var.enable_alb_logs
-  enable_vpc_flow_logs = var.enable_vpc_flow_logs
+  env                   = var.env
+  enable_alb_logs       = var.enable_alb_logs
+  enable_vpc_flow_logs  = var.enable_vpc_flow_logs
   enable_rds_audit_logs = var.enable_rds_audit_logs
-  log_retention_days = var.log_retention_days
-  sns_email = var.send_email
-  vpc_id = module.vpc.vpc_id
+  log_retention_days    = var.log_retention_days
+  sns_email             = var.send_email
+  vpc_id                = module.vpc.vpc_id
 }
 
 # ----------------------
@@ -115,13 +115,13 @@ module "logs" {
 module "alarms" {
   source = "../../modules/alarm"
 
-  env = var.env
+  env           = var.env
   sns_topic_arn = module.sns.sns_topic_arn
 
-  asg_name = module.ec2.asg_name 
-  alb_arn = module.alb.alb_arn_suffix
-  alb_tg_arn = module.alb.alb_tg_arn_suffix
-  db_instance_identifier = module.rds.db_instance_identifier
+  asg_name                 = module.ec2.asg_name
+  alb_arn                  = module.alb.alb_arn_suffix
+  alb_tg_arn               = module.alb.alb_tg_arn_suffix
+  db_instance_identifier   = module.rds.db_instance_identifier
   db_connections_threshold = var.db_connections_threshold
   nat_gw_ids = {
     "az-a" = module.vpc.nat_gw_ids[0]

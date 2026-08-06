@@ -12,7 +12,7 @@ resource "aws_cloudwatch_metric_alarm" "ec2_cpu_alarm" {
   threshold           = 70
   alarm_description   = "EC2 CPU使用率が70%を超過 (${var.asg_name})"
   alarm_actions       = [var.sns_topic_arn]
-  
+
   dimensions = {
     AutoScalingGroupName = var.asg_name
   }
@@ -23,17 +23,17 @@ resource "aws_cloudwatch_metric_alarm" "ec2_cpu_alarm" {
 # ----------------------
 resource "aws_cloudwatch_metric_alarm" "ec2_StatusCheck_alarm" {
   alarm_name          = "${var.env}-ec2-${var.asg_name}-status-check-failed"
-  metric_name = "StatusCheckFailed"
+  metric_name         = "StatusCheckFailed"
   comparison_operator = "GreaterThanOrEqualToThreshold"
-  evaluation_periods = 2
-  namespace = "AWS/EC2"
-  statistic = "Maximum"
-  period = 300
-  threshold = 1
-  alarm_description = "EC2 ステータスチェック失敗 (${var.asg_name})"
-  alarm_actions = [var.sns_topic_arn]
-  treat_missing_data = "missing"
-  
+  evaluation_periods  = 2
+  namespace           = "AWS/EC2"
+  statistic           = "Maximum"
+  period              = 300
+  threshold           = 1
+  alarm_description   = "EC2 ステータスチェック失敗 (${var.asg_name})"
+  alarm_actions       = [var.sns_topic_arn]
+  treat_missing_data  = "missing"
+
   dimensions = {
     AutoScalingGroupName = var.asg_name
   }
@@ -117,13 +117,13 @@ resource "aws_cloudwatch_metric_alarm" "cpu_utilization_too_high" {
   alarm_name          = "${var.env}-rds-cpu-high"
   comparison_operator = "GreaterThanOrEqualToThreshold"
 
-  evaluation_periods = 10
+  evaluation_periods  = 10
   datapoints_to_alarm = 1
-  metric_name = "CPUUtilization"
-  namespace   = "AWS/RDS"
-  period = 300
-  statistic = "Average"
-  threshold = var.cpu_utilization_threshold
+  metric_name         = "CPUUtilization"
+  namespace           = "AWS/RDS"
+  period              = 300
+  statistic           = "Average"
+  threshold           = var.cpu_utilization_threshold
 
   alarm_actions = [var.sns_topic_arn]
 
@@ -136,8 +136,8 @@ resource "aws_cloudwatch_metric_alarm" "cpu_utilization_too_high" {
 # RDS 接続数
 # ----------------------
 resource "aws_cloudwatch_metric_alarm" "rds_connections" {
-  alarm_name          = "${var.env}-rds-connections-high"
-  alarm_description   = "RDS connection count too high"
+  alarm_name        = "${var.env}-rds-connections-high"
+  alarm_description = "RDS connection count too high"
 
   namespace   = "AWS/RDS"
   metric_name = "DatabaseConnections"
@@ -147,7 +147,7 @@ resource "aws_cloudwatch_metric_alarm" "rds_connections" {
   evaluation_periods  = 2
   datapoints_to_alarm = 1
   period              = 60
-  statistic = "Average"
+  statistic           = "Average"
 
   dimensions = {
     DBInstanceIdentifier = var.db_instance_identifier
@@ -165,11 +165,11 @@ resource "aws_cloudwatch_metric_alarm" "free_storage_space_too_low" {
 
   evaluation_periods  = 1
   datapoints_to_alarm = 1
-  metric_name = "FreeStorageSpace"
-  namespace   = "AWS/RDS"
-  period    = 300
-  statistic = "Average"
-  threshold = var.free_storage_space_threshold
+  metric_name         = "FreeStorageSpace"
+  namespace           = "AWS/RDS"
+  period              = 300
+  statistic           = "Average"
+  threshold           = var.free_storage_space_threshold
 
   alarm_actions = [var.sns_topic_arn]
 
@@ -201,9 +201,9 @@ resource "aws_cloudwatch_metric_alarm" "memory_freeable_too_low" {
 # NAT Gateway ポート不足
 # ----------------------
 resource "aws_cloudwatch_metric_alarm" "natgw_error_port_allocation" {
-  for_each   = var.nat_gw_ids
-  alarm_name          = "${var.env}-natgw-${each.value}-port-allocation-error"
-  alarm_description   = "NAT Gateway port allocation errors detected"
+  for_each          = var.nat_gw_ids
+  alarm_name        = "${var.env}-natgw-${each.value}-port-allocation-error"
+  alarm_description = "NAT Gateway port allocation errors detected"
 
   namespace   = "AWS/NATGateway"
   metric_name = "ErrorPortAllocation"
@@ -228,8 +228,8 @@ resource "aws_cloudwatch_metric_alarm" "natgw_error_port_allocation" {
 resource "aws_cloudwatch_metric_alarm" "natgw_packet_drop" {
   for_each = var.nat_gw_ids
 
-  alarm_name          = "${var.env}-natgw-${each.value}-packet-drop"
-  alarm_description   = "NAT Gateway packet drops detected"
+  alarm_name        = "${var.env}-natgw-${each.value}-packet-drop"
+  alarm_description = "NAT Gateway packet drops detected"
 
   namespace   = "AWS/NATGateway"
   metric_name = "PacketsDropCount"

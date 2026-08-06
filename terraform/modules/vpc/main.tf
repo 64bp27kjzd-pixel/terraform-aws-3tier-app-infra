@@ -49,8 +49,8 @@ resource "aws_subnet" "private" {
 resource "aws_internet_gateway" "this" {
   vpc_id = aws_vpc.this.id
 
-  tags   = merge(var.common_tags, {
-    Name   = local.igw_name
+  tags = merge(var.common_tags, {
+    Name = local.igw_name
   })
 }
 
@@ -62,7 +62,7 @@ resource "aws_eip" "this" {
   domain = "vpc"
 
   tags = merge(var.common_tags, {
-    Name   = "${local.eip_name}-${count.index + 1}"
+    Name = "${local.eip_name}-${count.index + 1}"
   })
 }
 

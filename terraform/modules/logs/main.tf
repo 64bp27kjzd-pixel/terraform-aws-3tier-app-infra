@@ -5,19 +5,19 @@
 resource "aws_cloudwatch_log_group" "dnf" {
   name              = "/${var.env}/ec2/dnf"
   retention_in_days = var.log_retention_days
-  tags = { Environment = var.env }
+  tags              = { Environment = var.env }
 }
 
 resource "aws_cloudwatch_log_group" "httpd_access" {
   name              = "/${var.env}/ec2/httpd/access"
   retention_in_days = var.log_retention_days
-  tags = { Environment = var.env }
+  tags              = { Environment = var.env }
 }
 
 resource "aws_cloudwatch_log_group" "httpd_error" {
   name              = "/${var.env}/ec2/httpd/error"
   retention_in_days = var.log_retention_days
-  tags = { Environment = var.env }
+  tags              = { Environment = var.env }
 }
 
 # ==================================================
@@ -29,7 +29,7 @@ resource "aws_cloudwatch_log_group" "vpc_flow" {
   name              = "/${var.env}/vpc/flowlogs"
   retention_in_days = var.log_retention_days
 
-  tags = {          
+  tags = {
     Environment = var.env
   }
 }

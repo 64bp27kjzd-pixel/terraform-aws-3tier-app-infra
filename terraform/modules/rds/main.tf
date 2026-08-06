@@ -45,10 +45,10 @@ resource "aws_db_instance" "this" {
   vpc_security_group_ids = [aws_security_group.rds.id]
   db_subnet_group_name   = aws_db_subnet_group.this.name
 
-  multi_az            = var.multi_az
-  skip_final_snapshot = var.skip_final_snapshot
+  multi_az                  = var.multi_az
+  skip_final_snapshot       = var.skip_final_snapshot
   final_snapshot_identifier = var.final_snapshot_identifier != null ? var.final_snapshot_identifier : "${local.rds_name}-final"
-  backup_retention_period = var.backup_retention_period
+  backup_retention_period   = var.backup_retention_period
 
   lifecycle {
     ignore_changes = [final_snapshot_identifier]

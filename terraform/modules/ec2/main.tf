@@ -83,7 +83,7 @@ data "aws_ami" "amazon-linux" {
 # Launch Template
 # ----------------------
 resource "aws_launch_template" "this" {
-  name = local.lt_name
+  name                   = local.lt_name
   update_default_version = true
 
   image_id      = data.aws_ami.amazon-linux.id
@@ -99,7 +99,7 @@ resource "aws_launch_template" "this" {
 
   # UserData
   user_data = base64encode(templatefile("${path.module}/../userdata.sh", {
-  env = var.env
+    env = var.env
   }))
 
   tag_specifications {
@@ -116,7 +116,7 @@ resource "aws_launch_template" "this" {
 # ----------------------
 resource "aws_autoscaling_group" "this" {
   name = local.asg_name
-  
+
   # EC2をスケーリングする数
   max_size         = var.asg_max_size
   min_size         = var.asg_min_size

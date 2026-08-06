@@ -13,10 +13,10 @@ resource "aws_security_group" "alb" {
   }
 
   egress {
-  from_port     = 0
-  to_port       = 0
-  protocol      = "-1"
-  cidr_blocks   = ["0.0.0.0/0"]
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   tags = merge(var.common_tags, {
@@ -37,8 +37,8 @@ resource "aws_lb" "this" {
   enable_deletion_protection = var.enable_deletion_protection
 
   access_logs {
-  bucket  = var.alb_logs_bucket
-  enabled = true
+    bucket  = var.alb_logs_bucket
+    enabled = true
   }
 
   depends_on = [var.s3_bucket_arn]
