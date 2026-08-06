@@ -1,0 +1,53 @@
+name: Terraform Plan
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  id-token: write
+  contents: read
+  pull-requests: write
+
+env:
+    AWS_REGION: ap-northeast-1
+
+    TF_VAR_db_password: ${{ secrets.TF_VAR_DB_PASSWORD }}
+    TF_VAR_send_email: ${{ secrets.TF_VAR_SEND_EMAIL }}
+
+jobs:
+  terraform-plan:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: terraform/env/dev
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Create terraform.tfvars
+        run: cp terraform.tfvars.example terraform.tfvars
+
+      - name: Terraform Init
+        run: terraform init -backend-config=backend.hcl
+
+      - name: Terraform Format
+        run: terraform fmt -check -recursive
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Terraform Plan
+        run: terraform plan -var-file=terraform.tfvars
