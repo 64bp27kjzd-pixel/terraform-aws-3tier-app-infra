@@ -1,0 +1,26 @@
+project_name = "test"
+env  = "dev"
+
+vpc_cidr = "10.0.0.0/16"
+azs = ["ap-northeast-1a", "ap-northeast-1c"]
+enable_nat_gateway = true
+
+instance_type = "t3.micro"
+asg_min_size         = 2
+asg_max_size         = 2
+asg_desired_capacity = 2
+
+instance_class = "db.t3.micro"
+password       = ""
+multi_az                 = false
+backup_retention_period  = 0
+
+skip_final_snapshot = true
+enable_deletion_protection = false
+
+enable_alb_logs        = false
+enable_vpc_flow_logs   = false
+enable_rds_audit_logs  = false
+log_retention_days     = 7
+
+send_email = ""
