@@ -9,6 +9,7 @@ TerraformでAWS上に3層構成（Web/AP/DB）を意識したインフラ環境�
 - 本番運用を意識した3層アーキテクチャ設計
 - Terraformによる状態管理設計（S3 backend + DynamoDBロック）
 - AWS Well-Architectedフレームワーク（6つの柱）による自己評価と継続的な改善
+- GitHub ActionsによるTerraform実行のCI/CD化（OIDC認証、PRベースのplan/apply）
 ---
  
 ## 構成
@@ -40,6 +41,11 @@ EC2はSSM Session Manager経由で接続する構成とし、SSHポート（22�
  
 ```
 .
+├── .github
+│   └── workflows
+│       ├── terraform-plan.yml     # PR作成時にfmt/init/validate/planを自動実行
+│       └── terraform-apply.yml    # mainマージ時にinit/validate/applyを自動実行
+│       └── terraform-destroy.yml  # 手動トリガー（`workflow_dispatch`）で検証環境のリソースを削除
 ├── env
 │   ├── dev
 │   └── prod
@@ -86,7 +92,31 @@ devは低コストで検証できる構成、prodは可用性・監査要件を�
  
 ---
  
+## CI/CD（GitHub Actions）
+ 
+Terraformの実行を、ローカルでの手動applyからGitHub Actions経由のPRベース運用に移行しています。
+ 
+- **Terraform Plan**：`main`ブランチへのPull Request作成時に実行。`fmt` → `init` → `validate` → `plan` を行い、変更内容をPR上で確認可能にする
+- **Terraform Apply**：`main`ブランチへのpush（≒PRマージ）時に実行。`init` → `validate` → `apply -auto-approve` を自動実行する
+- **Terraform Destroy**：手動トリガー（`workflow_dispatch`）で検証環境のリソースを削除する用途で用意
+AWSへの認証はIAMユーザーの長期アクセスキーを使わず、**GitHub OIDC**でIAMロールを一時的にAssumeする方式を採用しています。信頼ポリシーの`sub`条件でリポジトリを限定し、意図しない主体からのAssumeRoleを防止しています。
+ 
+```bash
+# ローカルではなくPR経由でのみapplyされる運用
+git checkout -b feature/xxx
+# terraform/env/dev 配下を編集してpush → PR作成
+# → Terraform Planワークフローが自動実行され、plan結果がPR上で確認できる
+# → レビュー後にmainへマージ
+# → Terraform Applyワークフローが自動実行される
+```
+ 
+CI/CD構築の詳細（OIDC設定、ワークフローの解説）は下記の関連記事を参照してください。
+ 
+---
+
 ## デプロイ手順
+
+### ローカルでの動作確認（初回セットアップ・検証用）
  
 ```bash
 cd env/dev  # または env/prod
@@ -101,6 +131,10 @@ terraform apply
  
 `terraform.tfvars` は `.gitignore` で除外しているため、リポジトリには含まれません。
  
+### 通常運用（GitHub Actions経由）
+ 
+上記のローカル検証を経たのち、通常の変更はPR作成 → 自動plan確認 → mainマージ → 自動applyのフローで反映します（詳細は「CI/CD（GitHub Actions）」を参照）。
+ 
 ---
 
 ## 関連記事（Zenn）
@@ -111,7 +145,7 @@ terraform apply
 2. AWS Well-Architectedフレームワークによる自己評価編：`https://zenn.dev/aws_iac_notes/articles/d90856b81e65e0`
 3. CloudWatch監視・アラーム実装編（前編）：`https://zenn.dev/aws_iac_notes/articles/6d244171abd217`
 4. CloudWatch監視・ログ収集基盤編（後編）：`https://zenn.dev/aws_iac_notes/articles/eda5579e3d083a`
-
+5. GitHub ActionsによるTerraform CI/CD化編：
 ---
 
 ## 今後の拡張予定
@@ -120,4 +154,5 @@ terraform apply
 - [ ] RDS認証情報のParameter Store（SecureString）による動的参照への移行
 - [ ] ASGスケーリングポリシーの定義
 - [ ] CloudFront導入によるCDN配信
-- [ ] GitHub ActionsによるTerraform CI（fmt / validate / plan の自動化）
+- [x] GitHub ActionsによるTerraform CI（fmt / validate / plan の自動化）
+- [ ] IAMロールの権限をAdministratorAccessから最小権限のカスタムポリシーへ移行
