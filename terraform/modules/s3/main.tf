@@ -2,6 +2,7 @@ data "aws_caller_identity" "current" {}
 
 resource "aws_s3_bucket" "alb_logs" {
   bucket = "${var.env}-alb-access-logs-${data.aws_caller_identity.current.account_id}"
+  force_destroy = true
 }
 
 resource "aws_s3_bucket_policy" "alb_logs" {
