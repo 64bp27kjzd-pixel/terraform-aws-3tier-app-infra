@@ -72,7 +72,7 @@ module "rds" {
   subnet_ids        = module.vpc.private_subnet_ids
   ec2_sg_id         = module.ec2.ec2_sg_id
   username          = var.username
-  password          = var.password
+  password          = var.db_password
   vpc_cidr          = var.vpc_cidr
   engine            = var.engine
   engine_version    = var.engine_version

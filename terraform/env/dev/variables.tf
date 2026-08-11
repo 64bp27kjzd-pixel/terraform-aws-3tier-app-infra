@@ -103,7 +103,7 @@ variable "username" {
   description = "RDSのマスターユーザー名"
 }
 
-variable "password" {
+variable "db_password" {
   type        = string
   sensitive   = true
   description = "RDSのマスターパスワード"
