@@ -1,0 +1,58 @@
+name: Terraform Destroy
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_destroy:
+        description: '本当にdestroyを実行する場合は "destroy" と入力してください'
+        required: true
+        type: string
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: ap-northeast-1
+
+  TF_VAR_db_password: ${{ secrets.TF_VAR_DB_PASSWORD }}
+  TF_VAR_send_email: ${{ secrets.TF_VAR_SEND_EMAIL }}
+
+jobs:
+  terraform-destroy:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: terraform/env/dev
+
+    steps:
+      - name: Validate confirmation input
+        if: ${{ github.event.inputs.confirm_destroy != 'destroy' }}
+        run: |
+          echo "確認文字列が一致しません。処理を中止します。"
+          exit 1
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Create terraform.tfvars
+        run: cp terraform.tfvars.example terraform.tfvars
+
+      - name: Terraform Init
+        run: terraform init -backend-config=backend.hcl
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Terraform Destroy
+        run: terraform destroy -auto-approve -var-file=terraform.tfvars
